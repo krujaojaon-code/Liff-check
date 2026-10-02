@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบเช็คอินสะสมแต้ม</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); text-align: center; width: 300px; }
+        .profile-img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; }
+        .count-text { font-size: 48px; font-weight: bold; color: #00b900; margin: 15px 0; }
+        .btn { background-color: #00b900; color: white; border: none; padding: 12px 20px; font-size: 18px; border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; }
+        .btn:active { background-color: #009900; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h3>ระบบเช็คอินสะสมแต้ม</h3>
+    <img id="pictureUrl" class="profile-img" src="" alt="Profile">
+    <h2 id="displayName">กำลังโหลด...</h2>
+    <p>สะสมครบแล้ว: <span id="round">0</span> รอบ</p>
+    <p>จำนวนเช็คอินรอบปัจจุบัน</p>
+    <div class="count-text"><span id="count">0</span> / 10</div>
+    <button class="btn" onclick="checkIn()">📍 กดเช็คอิน</button>
+</div>
+
+<script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbyVMmfZui3J4VOgAdpgKMtH9BXbhmzd4QoSfb8znsbG-lkPJwTiMMbOofUGjL4uiYC9ig/exec";
+    const LIFF_ID = "2011831668-svA4ZJ08";
+
+    let userData = { userId: "", displayName: "", pictureUrl: "" };
+
+    async function main() {
+        await liff.init({ liffId: LIFF_ID });
+        if (!liff.isLoggedIn()) {
+            liff.login();
+        } else {
+            const profile = await liff.getProfile();
+            userData.userId = profile.userId;
+            userData.displayName = profile.displayName;
+            userData.pictureUrl = profile.pictureUrl;
+
+            document.getElementById("displayName").innerText = userData.displayName;
+            document.getElementById("pictureUrl").src = userData.pictureUrl;
+
+            fetchData();
+        }
+    }
+
+    function fetchData() {
+        fetch(`${WEB_APP_URL}?userId=${userData.userId}&displayName=${encodeURIComponent(userData.displayName)}`)
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById("count").innerText = data.count;
+                document.getElementById("round").innerText = data.round;
+            });
+    }
+
+    function checkIn() {
+        fetch(WEB_APP_URL, {
+            method: "POST",
+            body: JSON.stringify({ userId: userData.userId, displayName: userData.displayName })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if(data.status === "success") {
+                document.getElementById("count").innerText = data.count;
+                document.getElementById("round").innerText = data.round;
+                alert("เช็คอินสำเร็จ!");
+            }
+        });
+    }
+
+    main();
+</script>
+
+</body>
+</html>
